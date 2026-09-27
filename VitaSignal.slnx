@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Tests/">
+    <Project Path="VitaSignal.Application.Tests/VitaSignal.Application.Tests.csproj" />
+    <Project Path="VitaSignal.Domain.Tests/VitaSignal.Domain.Tests.csproj" />
+  </Folder>
+  <Project Path="VitaSignal.Api/VitaSignal.Api.csproj" />
+  <Project Path="VitaSignal.Application/VitaSignal.Application.csproj" />
+  <Project Path="VitaSignal.Domain/VitaSignal.Domain.csproj" />
+  <Project Path="VitaSignal.Infrastructure/VitaSignal.Infrastructure.csproj" />
+</Solution>
