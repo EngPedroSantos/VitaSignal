@@ -16,11 +16,11 @@ public sealed class RegisterVitalReadingUseCase
         _vitalReadingRepository = vitalReadingRepository;
     }
 
-    public async Task<RegisterVitalReadingResult> ExecuteAsync(RegisterVitalReadingRequest request,CancellationToken cancellationToken)
+    public async Task<RegisterVitalReadingResult> ExecuteAsync(RegisterVitalReadingRequest request, CancellationToken cancellationToken)
     {
         var patient = await _patientRepository.GetByIdAsync(request.PatientId, cancellationToken);
         if (patient is null)
-            throw new InvalidOperationException($"Patient '{request.PatientId}' was not found.");
+            throw new PatientNotFoundException(request.PatientId);
 
         var reading = VitalReading.Create(request.PatientId, request.Type, request.Value, request.RecordedAtUtc, request.DeviceId);
 
