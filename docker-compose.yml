@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: vitasignal
+      POSTGRES_USER: vitasignal
+      POSTGRES_PASSWORD: vitasignal
+    ports:
+      - "5432:5432"
+    volumes:
+      - vitasignal-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vitasignal -d vitasignal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: VitaSignal.Api/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__VitaSignalDb: "Host=db;Port=5432;Database=vitasignal;Username=vitasignal;Password=vitasignal"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  vitasignal-db-data:
