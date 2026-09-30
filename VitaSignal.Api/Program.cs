@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Scalar.AspNetCore;
 using System.Text.Json.Serialization;
 using VitaSignal.Api;
@@ -32,6 +34,14 @@ builder.Services.AddScoped<RegisterVitalReadingUseCase>();
 
 builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 builder.Services.AddProblemDetails();
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("VitaSignal.Api"))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddSource("Npgsql")
+        .AddConsoleExporter());
 
 var app = builder.Build();
 
