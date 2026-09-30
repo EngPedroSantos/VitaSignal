@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Scalar.AspNetCore;
@@ -41,6 +42,10 @@ builder.Services.AddOpenTelemetry()
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
         .AddSource("Npgsql")
+        .AddConsoleExporter())
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddMeter("VitaSignal.Application")
         .AddConsoleExporter());
 
 var app = builder.Build();
