@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using VitaSignal.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using VitaSignal.Infrastructure.Persistence;
 namespace VitaSignal.Infrastructure.Migrations
 {
     [DbContext(typeof(VitaSignalDbContext))]
-    partial class VitaSignalDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261002190440_AddVitalAlerts")]
+    partial class AddVitalAlerts
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
