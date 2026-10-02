@@ -1,10 +1,13 @@
-﻿using VitaSignal.Domain.VitalReadings.Enums;
+using VitaSignal.Domain.Common;
+using VitaSignal.Domain.VitalReadings.Enums;
 
 namespace VitaSignal.Domain.VitalReadings;
 
 public sealed class VitalReading
 {
     public const int DeviceIdMaxLength = 100;
+
+    private static readonly TimeSpan ClockSkewTolerance = TimeSpan.FromMinutes(1);
 
     public Guid Id { get; }
     public Guid PatientId { get; }
@@ -29,30 +32,29 @@ public sealed class VitalReading
 
     public static VitalReading Create(
         Guid patientId, VitalSignType type, double value,
-        DateTime recordedAt, string deviceId)
+        DateTime recordedAt, string deviceId, DateTimeOffset now)
     {
         if (patientId == Guid.Empty)
-            throw new ArgumentException("Patient id is required.", nameof(patientId));
+            throw new DomainValidationException("Patient id is required.");
 
         if (!Enum.IsDefined(type))
-            throw new ArgumentOutOfRangeException(nameof(type), $"Unknown vital sign type '{type}'.");
+            throw new DomainValidationException($"Unknown vital sign type '{type}'.");
 
         var plausibleRange = VitalPlausibilityCatalog.GetPlausibleRange(type);
         if (!plausibleRange.Contains(value))
-            throw new ArgumentOutOfRangeException(nameof(value),
-                $"{type} value {value} is outside what a device can measure ({plausibleRange.Min}-{plausibleRange.Max}).");
+            throw new ImplausibleVitalValueException(type, value, plausibleRange);
 
         var recordedAtUtc = ToUtc(recordedAt);
 
-        if (recordedAtUtc > DateTime.UtcNow.AddMinutes(1))
-            throw new ArgumentException("Recorded time cannot be in the future.", nameof(recordedAt));
+        if (recordedAtUtc > now.UtcDateTime.Add(ClockSkewTolerance))
+            throw new DomainValidationException("Recorded time cannot be in the future.");
 
         if (string.IsNullOrWhiteSpace(deviceId))
-            throw new ArgumentException("Device id is required.", nameof(deviceId));
+            throw new DomainValidationException("Device id is required.");
 
         var trimmedDeviceId = deviceId.Trim();
         if (trimmedDeviceId.Length > DeviceIdMaxLength)
-            throw new ArgumentException($"Device id cannot exceed {DeviceIdMaxLength} characters.", nameof(deviceId));
+            throw new DomainValidationException($"Device id cannot exceed {DeviceIdMaxLength} characters.");
 
         return new VitalReading(Guid.NewGuid(), patientId, type, value, UnitFor(type), recordedAtUtc, trimmedDeviceId);
     }
@@ -60,12 +62,11 @@ public sealed class VitalReading
     private static DateTime ToUtc(DateTime recordedAt)
     {
         if (recordedAt == default)
-            throw new ArgumentException("Recorded time is required.", nameof(recordedAt));
+            throw new DomainValidationException("Recorded time is required.");
 
         if (recordedAt.Kind == DateTimeKind.Unspecified)
-            throw new ArgumentException(
-                "Recorded time must include a timezone (e.g. '2026-10-01T10:00:00Z' or '2026-10-01T07:00:00-03:00').",
-                nameof(recordedAt));
+            throw new DomainValidationException(
+                "Recorded time must include a timezone (e.g. '2026-10-01T10:00:00Z' or '2026-10-01T07:00:00-03:00').");
 
         return recordedAt.ToUniversalTime();
     }
