@@ -1,11 +1,10 @@
-﻿namespace VitaSignal.Domain.VitalReadings.Enums
+namespace VitaSignal.Domain.VitalReadings.Enums;
+
+public enum VitalSignType
 {
-    public enum VitalSignType
-    {
-        HeartRate,
-        SpO2,
-        BodyTemperature,
-        SystolicBloodPressure,
-        DiastolicBloodPressure
-    }
+    HeartRate,
+    SpO2,
+    BodyTemperature,
+    SystolicBloodPressure,
+    DiastolicBloodPressure
 }

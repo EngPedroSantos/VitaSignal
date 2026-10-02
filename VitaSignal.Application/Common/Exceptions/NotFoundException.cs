@@ -1,4 +1,4 @@
-﻿namespace VitaSignal.Application.Common.Exceptions;
+namespace VitaSignal.Application.Common.Exceptions;
 
 public abstract class NotFoundException : Exception
 {

@@ -1,6 +1,63 @@
-@VitaSignal.Api_HostAddress = http://localhost:5265
+@host = http://localhost:5265
 
-GET {{VitaSignal.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Register a synthetic patient
+# @name patient
+POST {{host}}/api/patients
 
 ###
+@patientId = {{patient.response.body.$.id}}
+
+### Get the patient
+GET {{host}}/api/patients/{{patientId}}
+
+### Register a reading inside the normal range
+POST {{host}}/api/vitalreadings
+Content-Type: application/json
+
+{
+  "patientId": "{{patientId}}",
+  "type": "HeartRate",
+  "value": 72,
+  "recordedAtUtc": "{{$datetime iso8601}}",
+  "deviceId": "monitor-001"
+}
+
+### Register a reading that raises a critical alert
+# @name critical
+POST {{host}}/api/vitalreadings
+Content-Type: application/json
+
+{
+  "patientId": "{{patientId}}",
+  "type": "HeartRate",
+  "value": 180,
+  "recordedAtUtc": "{{$datetime iso8601}}",
+  "deviceId": "monitor-001"
+}
+
+### Rejected: SpO2 above what a device can measure
+POST {{host}}/api/vitalreadings
+Content-Type: application/json
+
+{
+  "patientId": "{{patientId}}",
+  "type": "SpO2",
+  "value": 250,
+  "recordedAtUtc": "{{$datetime iso8601}}",
+  "deviceId": "monitor-001"
+}
+
+### List readings, newest first
+GET {{host}}/api/patients/{{patientId}}/readings?limit=20
+
+### List pending alerts
+GET {{host}}/api/patients/{{patientId}}/alerts?pendingOnly=true
+
+### Acknowledge the critical alert
+POST {{host}}/api/alerts/{{critical.response.body.$.alert.id}}/acknowledge
+
+### Health
+GET {{host}}/health/ready
+
+### Metrics scraped by Prometheus
+GET {{host}}/metrics

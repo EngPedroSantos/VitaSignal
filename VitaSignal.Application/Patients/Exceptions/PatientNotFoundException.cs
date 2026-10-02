@@ -1,6 +1,6 @@
-﻿using VitaSignal.Application.Common.Exceptions;
+using VitaSignal.Application.Common.Exceptions;
 
-namespace VitaSignal.Application.Patients;
+namespace VitaSignal.Application.Patients.Exceptions;
 
 public sealed class PatientNotFoundException : NotFoundException
 {
