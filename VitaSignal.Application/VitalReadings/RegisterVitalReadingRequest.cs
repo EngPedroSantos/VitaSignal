@@ -4,7 +4,7 @@ namespace VitaSignal.Application.VitalReadings;
 
 public sealed record RegisterVitalReadingRequest(
     Guid PatientId,
-    VitalSignType Type,
+    VitalSignType? Type,
     double Value,
-    DateTime RecordedAtUtc,
+    DateTime? RecordedAtUtc,
     string DeviceId);

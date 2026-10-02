@@ -9,7 +9,7 @@ public sealed class PatientConfiguration : IEntityTypeConfiguration<Patient>
     public void Configure(EntityTypeBuilder<Patient> builder)
     {
         builder.HasKey(p => p.Id);
-        builder.Property(p => p.DisplayName).IsRequired().HasMaxLength(200);
+        builder.Property(p => p.DisplayName).IsRequired().HasMaxLength(Patient.DisplayNameMaxLength);
         builder.Ignore(p => p.IsSyntheticData);
     }
 }

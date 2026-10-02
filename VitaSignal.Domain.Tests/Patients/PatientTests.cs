@@ -22,5 +22,23 @@ namespace VitaSignal.Domain.Tests.Patients
 
             Assert.Throws<ArgumentException>(() => Patient.Create(displayName));
         }
+
+        [Fact]
+        public void Should_ThrowArgumentException_When_DisplayNameExceedsMaxLength()
+        {
+            var displayName = new string('a', Patient.DisplayNameMaxLength + 1);
+
+            Assert.Throws<ArgumentException>(() => Patient.Create(displayName));
+        }
+
+        [Fact]
+        public void Should_CreatePatient_When_DisplayNameHasMaxLengthAfterTrim()
+        {
+            var displayName = "  " + new string('a', Patient.DisplayNameMaxLength) + "  ";
+
+            var patient = Patient.Create(displayName);
+
+            Assert.Equal(Patient.DisplayNameMaxLength, patient.DisplayName.Length);
+        }
     }
 }
