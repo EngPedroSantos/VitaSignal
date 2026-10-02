@@ -50,5 +50,42 @@ namespace VitaSignal.Domain.Tests.VitalReadings
 
             Assert.Throws<ArgumentException>(() => VitalReading.Create(Guid.NewGuid(), VitalSignType.SystolicBloodPressure, 70, DateTime.UtcNow, deviceId));
         }
+
+        [Theory]
+        [InlineData(50, true)]    // dentro da faixa
+        [InlineData(9, false)]    // abaixo do Min
+        [InlineData(101, false)]  // acima do Max
+        [InlineData(10, true)]    // exatamente no Min — limite inclusivo
+        [InlineData(100, true)]   // exatamente no Max — limite inclusivo
+        public void Should_EvaluateContainsCorrectly_When_GivenDifferentValues(double value, bool expected)
+        {
+            var range = new VitalRange(10, 100);
+
+            var result = range.Contains(value);
+
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData(VitalSignType.HeartRate, 60, 100)]
+        [InlineData(VitalSignType.SpO2, 95, 100)]
+        [InlineData(VitalSignType.BodyTemperature, 36.1, 37.2)]
+        [InlineData(VitalSignType.SystolicBloodPressure, 90, 120)]
+        [InlineData(VitalSignType.DiastolicBloodPressure, 60, 80)]
+        public void Should_ReturnExpectedRange_When_TypeIsKnown(VitalSignType type, double expectedMin, double expectedMax)
+        {
+            var range = VitalRangeCatalog.GetNormalRange(type);
+
+            Assert.Equal(expectedMin, range.Min);
+            Assert.Equal(expectedMax, range.Max);
+        }
+
+        [Fact]
+        public void Should_ThrowArgumentOutOfRangeException_When_TypeIsUnknown()
+        {
+            var invalidType = (VitalSignType)999;
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => VitalRangeCatalog.GetNormalRange(invalidType));
+        }
     }
 }
