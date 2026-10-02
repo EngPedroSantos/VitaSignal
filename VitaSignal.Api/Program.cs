@@ -46,7 +46,9 @@ builder.Services.AddOpenTelemetry()
     .WithMetrics(metrics => metrics
         .AddAspNetCoreInstrumentation()
         .AddMeter("VitaSignal.Application")
-        .AddConsoleExporter());
+        .AddConsoleExporter((_, readerOptions) =>
+            readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 5000)
+        .AddPrometheusExporter());
 
 var app = builder.Build();
 
@@ -66,5 +68,6 @@ app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.MapPrometheusScrapingEndpoint();
 
 app.Run();
