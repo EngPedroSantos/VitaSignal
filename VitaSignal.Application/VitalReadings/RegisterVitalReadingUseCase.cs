@@ -22,18 +22,24 @@ public sealed class RegisterVitalReadingUseCase
     {
         var stopwatch = Stopwatch.StartNew();
 
+        if (request.Type is null)
+            throw new ArgumentException("Vital sign type is required.", nameof(request.Type));
+
+        if (request.RecordedAtUtc is null)
+            throw new ArgumentException("Recorded time is required.", nameof(request.RecordedAtUtc));
+
         var patient = await _patientRepository.GetByIdAsync(request.PatientId, cancellationToken);
         if (patient is null)
             throw new PatientNotFoundException(request.PatientId);
 
-        var reading = VitalReading.Create(request.PatientId, request.Type, request.Value, request.RecordedAtUtc, request.DeviceId);
+        var reading = VitalReading.Create(request.PatientId, request.Type.Value, request.Value, request.RecordedAtUtc.Value, request.DeviceId);
 
         await _vitalReadingRepository.AddAsync(reading, cancellationToken);
 
-        var normalRange = VitalRangeCatalog.GetNormalRange(request.Type);
-        var isWithinRange = normalRange.Contains(request.Value);
+        var normalRange = VitalRangeCatalog.GetNormalRange(reading.Type);
+        var isWithinRange = normalRange.Contains(reading.Value);
 
-        RecordMetrics(request.Type, isWithinRange, stopwatch.Elapsed);
+        RecordMetrics(reading.Type, isWithinRange, stopwatch.Elapsed);
 
         return new RegisterVitalReadingResult(reading, isWithinRange);
     }

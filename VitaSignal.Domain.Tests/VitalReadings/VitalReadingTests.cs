@@ -6,14 +6,14 @@ namespace VitaSignal.Domain.Tests.VitalReadings
     public class VitalReadingTests
     {
         [Theory]
-        [InlineData(VitalSignType.HeartRate, "bpm")]
-        [InlineData(VitalSignType.SpO2, "%")]
-        [InlineData(VitalSignType.BodyTemperature, "°C")]
-        [InlineData(VitalSignType.SystolicBloodPressure, "mmHg")]
-        [InlineData(VitalSignType.DiastolicBloodPressure, "mmHg")]
-        public void Should_CreateVitalReading_When_DataIsValid(VitalSignType type, string expectedUnit)
+        [InlineData(VitalSignType.HeartRate, 70, "bpm")]
+        [InlineData(VitalSignType.SpO2, 98, "%")]
+        [InlineData(VitalSignType.BodyTemperature, 36.5, "°C")]
+        [InlineData(VitalSignType.SystolicBloodPressure, 110, "mmHg")]
+        [InlineData(VitalSignType.DiastolicBloodPressure, 70, "mmHg")]
+        public void Should_CreateVitalReading_When_DataIsValid(VitalSignType type, double value, string expectedUnit)
         {
-            var vitalReading = VitalReading.Create(Guid.NewGuid(), type, 70, DateTime.UtcNow, "device123");
+            var vitalReading = VitalReading.Create(Guid.NewGuid(), type, value, DateTime.UtcNow, "device123");
 
             Assert.Equal(expectedUnit, vitalReading.Unit);
             Assert.Equal(type, vitalReading.Type);
@@ -40,7 +40,7 @@ namespace VitaSignal.Domain.Tests.VitalReadings
         {
             var recordedAtUtc = DateTime.UtcNow.AddHours(1);
 
-            Assert.Throws<ArgumentException>(() => VitalReading.Create(Guid.NewGuid(), VitalSignType.BodyTemperature, 70, recordedAtUtc, "device123"));
+            Assert.Throws<ArgumentException>(() => VitalReading.Create(Guid.NewGuid(), VitalSignType.BodyTemperature, 36.5, recordedAtUtc, "device123"));
         }
 
         [Fact]
@@ -49,6 +49,102 @@ namespace VitaSignal.Domain.Tests.VitalReadings
             var deviceId = string.Empty;
 
             Assert.Throws<ArgumentException>(() => VitalReading.Create(Guid.NewGuid(), VitalSignType.SystolicBloodPressure, 70, DateTime.UtcNow, deviceId));
+        }
+
+        [Fact]
+        public void Should_ThrowArgumentException_When_RecordedAtHasNoTimezone()
+        {
+            var recordedAt = new DateTime(2026, 10, 1, 10, 0, 0, DateTimeKind.Unspecified);
+
+            Assert.Throws<ArgumentException>(() => VitalReading.Create(Guid.NewGuid(), VitalSignType.HeartRate, 70, recordedAt, "device123"));
+        }
+
+        [Fact]
+        public void Should_ThrowArgumentException_When_RecordedAtIsDefault()
+        {
+            var recordedAt = DateTime.SpecifyKind(default, DateTimeKind.Utc);
+
+            Assert.Throws<ArgumentException>(() => VitalReading.Create(Guid.NewGuid(), VitalSignType.HeartRate, 70, recordedAt, "device123"));
+        }
+
+        [Fact]
+        public void Should_StoreRecordedAtAsUtc_When_RecordedAtIsLocal()
+        {
+            var recordedAtUtc = DateTime.UtcNow.AddMinutes(-5);
+            var recordedAtLocal = recordedAtUtc.ToLocalTime();
+
+            var vitalReading = VitalReading.Create(Guid.NewGuid(), VitalSignType.HeartRate, 70, recordedAtLocal, "device123");
+
+            Assert.Equal(DateTimeKind.Utc, vitalReading.RecordedAtUtc.Kind);
+            Assert.Equal(recordedAtUtc, vitalReading.RecordedAtUtc);
+        }
+
+        [Fact]
+        public void Should_ThrowArgumentException_When_RecordedAtIsLocalAndInTheFuture()
+        {
+            var recordedAtLocal = DateTime.UtcNow.AddHours(1).ToLocalTime();
+
+            Assert.Throws<ArgumentException>(() => VitalReading.Create(Guid.NewGuid(), VitalSignType.HeartRate, 70, recordedAtLocal, "device123"));
+        }
+
+        [Fact]
+        public void Should_ThrowArgumentOutOfRangeException_When_TypeIsNotDefined()
+        {
+            var invalidType = (VitalSignType)999;
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => VitalReading.Create(Guid.NewGuid(), invalidType, 70, DateTime.UtcNow, "device123"));
+        }
+
+        [Theory]
+        [InlineData(VitalSignType.SpO2, 250)]
+        [InlineData(VitalSignType.SpO2, 0)]
+        [InlineData(VitalSignType.HeartRate, 400)]
+        [InlineData(VitalSignType.HeartRate, 10)]
+        [InlineData(VitalSignType.BodyTemperature, 70)]
+        [InlineData(VitalSignType.BodyTemperature, 20)]
+        [InlineData(VitalSignType.SystolicBloodPressure, 350)]
+        [InlineData(VitalSignType.DiastolicBloodPressure, 10)]
+        public void Should_ThrowArgumentOutOfRangeException_When_ValueIsNotPlausible(VitalSignType type, double value)
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => VitalReading.Create(Guid.NewGuid(), type, value, DateTime.UtcNow, "device123"));
+        }
+
+        [Theory]
+        [InlineData(VitalSignType.SpO2, 100)]
+        [InlineData(VitalSignType.HeartRate, 20)]
+        [InlineData(VitalSignType.HeartRate, 300)]
+        [InlineData(VitalSignType.BodyTemperature, 45)]
+        public void Should_CreateVitalReading_When_ValueIsAtPlausibleLimit(VitalSignType type, double value)
+        {
+            var vitalReading = VitalReading.Create(Guid.NewGuid(), type, value, DateTime.UtcNow, "device123");
+
+            Assert.Equal(value, vitalReading.Value);
+        }
+
+        [Fact]
+        public void Should_CreateVitalReading_When_ValueIsOutsideNormalRangeButPlausible()
+        {
+            var vitalReading = VitalReading.Create(Guid.NewGuid(), VitalSignType.HeartRate, 180, DateTime.UtcNow, "device123");
+
+            Assert.Equal(180, vitalReading.Value);
+        }
+
+        [Fact]
+        public void Should_ThrowArgumentException_When_DeviceIdExceedsMaxLength()
+        {
+            var deviceId = new string('x', VitalReading.DeviceIdMaxLength + 1);
+
+            Assert.Throws<ArgumentException>(() => VitalReading.Create(Guid.NewGuid(), VitalSignType.HeartRate, 70, DateTime.UtcNow, deviceId));
+        }
+
+        [Fact]
+        public void Should_CreateVitalReading_When_DeviceIdHasMaxLengthAfterTrim()
+        {
+            var deviceId = "  " + new string('x', VitalReading.DeviceIdMaxLength) + "  ";
+
+            var vitalReading = VitalReading.Create(Guid.NewGuid(), VitalSignType.HeartRate, 70, DateTime.UtcNow, deviceId);
+
+            Assert.Equal(VitalReading.DeviceIdMaxLength, vitalReading.DeviceId.Length);
         }
 
         [Theory]

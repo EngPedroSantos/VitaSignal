@@ -111,4 +111,81 @@ public class RegisterVitalReadingUseCaseTests
 
         Assert.False(result.IsWithinNormalRange);
     }
+
+    [Fact]
+    public async Task Should_ThrowArgumentException_When_TypeIsMissing()
+    {
+        var request = new RegisterVitalReadingRequest(
+            PatientId: Guid.NewGuid(),
+            Type: null,
+            Value: 70,
+            RecordedAtUtc: DateTime.UtcNow,
+            DeviceId: "device-test"
+        );
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => _useCase.ExecuteAsync(request, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Should_ThrowArgumentException_When_RecordedAtIsMissing()
+    {
+        var request = new RegisterVitalReadingRequest(
+            PatientId: Guid.NewGuid(),
+            Type: VitalSignType.HeartRate,
+            Value: 70,
+            RecordedAtUtc: null,
+            DeviceId: "device-test"
+        );
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => _useCase.ExecuteAsync(request, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Should_NotQueryRepositories_When_RequiredFieldIsMissing()
+    {
+        var request = new RegisterVitalReadingRequest(
+            PatientId: Guid.NewGuid(),
+            Type: null,
+            Value: 70,
+            RecordedAtUtc: DateTime.UtcNow,
+            DeviceId: "device-test"
+        );
+
+        try { await _useCase.ExecuteAsync(request, CancellationToken.None); }
+        catch (ArgumentException) { }
+
+        _patientRepositoryMock.Verify(
+            r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _vitalReadingRepositoryMock.Verify(
+            r => r.AddAsync(It.IsAny<Domain.VitalReadings.VitalReading>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Should_NotCallAddAsync_When_ValueIsNotPlausible()
+    {
+        var patient = Patient.Create("Test Name");
+
+        var request = new RegisterVitalReadingRequest(
+            PatientId: patient.Id,
+            Type: VitalSignType.SpO2,
+            Value: 250,
+            RecordedAtUtc: DateTime.UtcNow,
+            DeviceId: "device-test"
+        );
+
+        _patientRepositoryMock
+            .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(patient);
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => _useCase.ExecuteAsync(request, CancellationToken.None));
+
+        _vitalReadingRepositoryMock.Verify(
+            r => r.AddAsync(It.IsAny<Domain.VitalReadings.VitalReading>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
 }

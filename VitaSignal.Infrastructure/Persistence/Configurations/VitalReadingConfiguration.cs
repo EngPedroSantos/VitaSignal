@@ -12,7 +12,7 @@ public sealed class VitalReadingConfiguration : IEntityTypeConfiguration<VitalRe
         builder.Property(r => r.PatientId);
         builder.Property(r => r.Value);
         builder.Property(r => r.RecordedAtUtc);
-        builder.Property(r => r.DeviceId).IsRequired().HasMaxLength(100);
+        builder.Property(r => r.DeviceId).IsRequired().HasMaxLength(VitalReading.DeviceIdMaxLength);
         builder.Property(r => r.Unit).IsRequired().HasMaxLength(20);
         builder.Property(r => r.Type).HasConversion<string>().HasMaxLength(30);
     }
