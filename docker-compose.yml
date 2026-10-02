@@ -43,6 +43,7 @@ services:
       - "3000:3000"
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards/json
       - grafana-data:/var/lib/grafana
     depends_on:
       - prometheus
