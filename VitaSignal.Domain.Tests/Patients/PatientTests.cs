@@ -1,44 +1,41 @@
-﻿using VitaSignal.Domain.Patients;
+using VitaSignal.Domain.Patients;
 
-namespace VitaSignal.Domain.Tests.Patients
+namespace VitaSignal.Domain.Tests.Patients;
+
+public class PatientTests
 {
-    public class PatientTests
+    [Fact]
+    public void Should_GeneratePseudonymousCode_When_PatientIsCreated()
     {
-        [Fact]
-        public void Should_CreatePatient_When_DisplayNameIsValid()
-        {
-            var displayName = "Pedro Henrique";
-            
-            var patient = Patient.Create(displayName);
+        var patient = Patient.Create();
 
-            Assert.Equal(displayName, patient.DisplayName);
-            Assert.NotEqual(Guid.Empty, patient.Id);
-        }
+        Assert.NotEqual(Guid.Empty, patient.Id);
+        Assert.StartsWith(Patient.CodePrefix, patient.Code, StringComparison.Ordinal);
+        Assert.Equal(Patient.CodeLength, patient.Code.Length);
+    }
 
-        [Fact]
-        public void Should_ThrowArgumentException_When_DisplayNameIsEmpty()
-        {
-            string displayName = string.Empty;
+    [Fact]
+    public void Should_DeriveCodeFromId_When_PatientIsCreated()
+    {
+        var patient = Patient.Create();
 
-            Assert.Throws<ArgumentException>(() => Patient.Create(displayName));
-        }
+        var expectedSuffix = patient.Id.ToString("N")[..12].ToUpperInvariant();
 
-        [Fact]
-        public void Should_ThrowArgumentException_When_DisplayNameExceedsMaxLength()
-        {
-            var displayName = new string('a', Patient.DisplayNameMaxLength + 1);
+        Assert.Equal(Patient.CodePrefix + expectedSuffix, patient.Code);
+    }
 
-            Assert.Throws<ArgumentException>(() => Patient.Create(displayName));
-        }
+    [Fact]
+    public void Should_GenerateDifferentCodes_When_TwoPatientsAreCreated()
+    {
+        var first = Patient.Create();
+        var second = Patient.Create();
 
-        [Fact]
-        public void Should_CreatePatient_When_DisplayNameHasMaxLengthAfterTrim()
-        {
-            var displayName = "  " + new string('a', Patient.DisplayNameMaxLength) + "  ";
+        Assert.NotEqual(first.Code, second.Code);
+    }
 
-            var patient = Patient.Create(displayName);
-
-            Assert.Equal(Patient.DisplayNameMaxLength, patient.DisplayName.Length);
-        }
+    [Fact]
+    public void Should_FlagDataAsSynthetic_Always()
+    {
+        Assert.True(Patient.IsSyntheticData);
     }
 }
