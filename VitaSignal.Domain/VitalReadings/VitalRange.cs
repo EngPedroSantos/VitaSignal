@@ -1,4 +1,4 @@
-﻿namespace VitaSignal.Domain.VitalReadings;
+namespace VitaSignal.Domain.VitalReadings;
 
 public readonly record struct VitalRange(double Min, double Max)
 {
