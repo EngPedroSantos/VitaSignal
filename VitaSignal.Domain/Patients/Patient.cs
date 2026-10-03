@@ -1,29 +1,27 @@
-﻿namespace VitaSignal.Domain.Patients
+using System.Globalization;
+
+namespace VitaSignal.Domain.Patients;
+
+public sealed class Patient
 {
-    public class Patient
+    public const string CodePrefix = "PAC-";
+    public const int CodeLength = 16;
+
+    public Guid Id { get; }
+    public string Code { get; }
+    public static bool IsSyntheticData => true;
+
+    private Patient(Guid id, string code)
     {
-        public const int DisplayNameMaxLength = 200;
+        Id = id;
+        Code = code;
+    }
 
-        public Guid Id { get; }
-        public string DisplayName { get; }
-        public bool IsSyntheticData => true;
+    public static Patient Create()
+    {
+        var id = Guid.NewGuid();
+        var code = CodePrefix + id.ToString("N", CultureInfo.InvariantCulture)[..12].ToUpperInvariant();
 
-        private Patient(Guid id, string displayName)
-        {
-            Id = id;
-            DisplayName = displayName;
-        }
-
-        public static Patient Create(string displayName)
-        {
-            if (string.IsNullOrWhiteSpace(displayName))
-                throw new ArgumentException("Display name is required.", nameof(displayName));
-
-            var trimmedDisplayName = displayName.Trim();
-            if (trimmedDisplayName.Length > DisplayNameMaxLength)
-                throw new ArgumentException($"Display name cannot exceed {DisplayNameMaxLength} characters.", nameof(displayName));
-
-            return new Patient(Guid.NewGuid(), trimmedDisplayName);
-        }
+        return new Patient(id, code);
     }
 }
