@@ -1,16 +1,16 @@
 services:
   db:
-    image: postgres:17
+    image: postgres:17.11
     environment:
-      POSTGRES_DB: vitasignal
-      POSTGRES_USER: vitasignal
-      POSTGRES_PASSWORD: vitasignal
+      POSTGRES_DB: ${POSTGRES_DB:-vitasignal}
+      POSTGRES_USER: ${POSTGRES_USER:-vitasignal}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vitasignal}
     ports:
       - "5432:5432"
     volumes:
       - vitasignal-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U vitasignal -d vitasignal"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vitasignal} -d ${POSTGRES_DB:-vitasignal}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -19,34 +19,64 @@ services:
     build:
       context: .
       dockerfile: VitaSignal.Api/Dockerfile
+    restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__VitaSignalDb: "Host=db;Port=5432;Database=vitasignal;Username=vitasignal;Password=vitasignal"
+      ConnectionStrings__VitaSignalDb: "Host=db;Port=5432;Database=${POSTGRES_DB:-vitasignal};Username=${POSTGRES_USER:-vitasignal};Password=${POSTGRES_PASSWORD:-vitasignal};GSS Encryption Mode=Disable"
+      Telemetry__ConsoleExporter: "false"
     depends_on:
       db:
         condition: service_healthy
-    
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q ' 200 '"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  simulator:
+    build:
+      context: .
+      dockerfile: VitaSignal.DeviceSimulator/Dockerfile
+    restart: unless-stopped
+    profiles: ["sim"]
+    environment:
+      DOTNET_ENVIRONMENT: Production
+      Simulator__ApiBaseUrl: http://api:8080
+      Simulator__Patients: ${SIMULATOR_PATIENTS:-10}
+      Simulator__IntervalSeconds: ${SIMULATOR_INTERVAL_SECONDS:-5}
+      Simulator__AnomalyRate: ${SIMULATOR_ANOMALY_RATE:-0.1}
+    depends_on:
+      api:
+        condition: service_healthy
+
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.15.0
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
     ports:
       - "9090:9090"
-      
+    depends_on:
+      api:
+        condition: service_healthy
+
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:13.2.3
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
     ports:
       - "3000:3000"
     volumes:
-      - ./grafana/provisioning:/etc/grafana/provisioning
-      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards/json
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
       - grafana-data:/var/lib/grafana
     depends_on:
       - prometheus
-    
+
 volumes:
   vitasignal-db-data:
   grafana-data:

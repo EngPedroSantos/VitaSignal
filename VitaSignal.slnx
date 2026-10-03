@@ -5,6 +5,7 @@
   </Folder>
   <Project Path="VitaSignal.Api/VitaSignal.Api.csproj" />
   <Project Path="VitaSignal.Application/VitaSignal.Application.csproj" />
+  <Project Path="VitaSignal.DeviceSimulator/VitaSignal.DeviceSimulator.csproj" />
   <Project Path="VitaSignal.Domain/VitaSignal.Domain.csproj" />
   <Project Path="VitaSignal.Infrastructure/VitaSignal.Infrastructure.csproj" />
 </Solution>
