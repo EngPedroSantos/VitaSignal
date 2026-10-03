@@ -1,4 +1,4 @@
-﻿using VitaSignal.Domain.VitalReadings.Enums;
+using VitaSignal.Domain.VitalReadings.Enums;
 
 namespace VitaSignal.Application.VitalReadings;
 

@@ -1,5 +1,6 @@
-﻿using VitaSignal.Domain.VitalReadings;
+using VitaSignal.Domain.Alerts;
+using VitaSignal.Domain.VitalReadings;
 
 namespace VitaSignal.Application.VitalReadings;
 
-public sealed record RegisterVitalReadingResult(VitalReading Reading, bool IsWithinNormalRange);
+public sealed record RegisterVitalReadingResult(VitalReading Reading, bool IsWithinNormalRange, VitalAlert? Alert);

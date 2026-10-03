@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using VitaSignal.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using VitaSignal.Infrastructure.Persistence;
 namespace VitaSignal.Infrastructure.Migrations
 {
     [DbContext(typeof(VitaSignalDbContext))]
-    partial class VitaSignalDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261002190410_AddPatientCodeAndReadingsIndex")]
+    partial class AddPatientCodeAndReadingsIndex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,52 +24,6 @@ namespace VitaSignal.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("VitaSignal.Domain.Alerts.VitalAlert", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("AcknowledgedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("PatientId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("RaisedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("ReadingId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Severity")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.Property<double>("Value")
-                        .HasColumnType("double precision");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ReadingId")
-                        .IsUnique();
-
-                    b.HasIndex("PatientId", "RaisedAtUtc")
-                        .HasDatabaseName("IX_VitalAlerts_Pending")
-                        .HasFilter("\"AcknowledgedAtUtc\" IS NULL");
-
-                    b.HasIndex("PatientId", "RaisedAtUtc", "Id")
-                        .IsDescending(false, true, true);
-
-                    b.ToTable("VitalAlerts");
-                });
 
             modelBuilder.Entity("VitaSignal.Domain.Patients.Patient", b =>
                 {
@@ -123,21 +80,6 @@ namespace VitaSignal.Infrastructure.Migrations
                         .IsDescending(false, true, true);
 
                     b.ToTable("VitalReadings");
-                });
-
-            modelBuilder.Entity("VitaSignal.Domain.Alerts.VitalAlert", b =>
-                {
-                    b.HasOne("VitaSignal.Domain.Patients.Patient", null)
-                        .WithMany()
-                        .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("VitaSignal.Domain.VitalReadings.VitalReading", null)
-                        .WithOne()
-                        .HasForeignKey("VitaSignal.Domain.Alerts.VitalAlert", "ReadingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("VitaSignal.Domain.VitalReadings.VitalReading", b =>
