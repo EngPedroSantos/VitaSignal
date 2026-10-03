@@ -1,4 +1,4 @@
-﻿using VitaSignal.Domain.VitalReadings;
+using VitaSignal.Domain.VitalReadings;
 using VitaSignal.Domain.VitalReadings.Enums;
 
 namespace VitaSignal.Domain.Tests.VitalReadings;
@@ -11,13 +11,13 @@ public class VitalPlausibilityCatalogTests
     [InlineData(VitalSignType.BodyTemperature)]
     [InlineData(VitalSignType.SystolicBloodPressure)]
     [InlineData(VitalSignType.DiastolicBloodPressure)]
-    public void Should_ContainNormalRange_When_TypeIsKnown(VitalSignType type)
+    public void Should_ContainCriticalRange_When_TypeIsKnown(VitalSignType type)
     {
         var plausibleRange = VitalPlausibilityCatalog.GetPlausibleRange(type);
-        var normalRange = VitalRangeCatalog.GetNormalRange(type);
+        var criticalRange = VitalRangeCatalog.GetCriticalRange(type);
 
-        Assert.True(plausibleRange.Contains(normalRange.Min));
-        Assert.True(plausibleRange.Contains(normalRange.Max));
+        Assert.True(plausibleRange.Contains(criticalRange.Min));
+        Assert.True(plausibleRange.Contains(criticalRange.Max));
     }
 
     [Fact]

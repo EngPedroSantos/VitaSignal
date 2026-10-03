@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Tests/">
+    <Project Path="VitaSignal.Api.IntegrationTests/VitaSignal.Api.IntegrationTests.csproj" />
     <Project Path="VitaSignal.Application.Tests/VitaSignal.Application.Tests.csproj" />
     <Project Path="VitaSignal.Domain.Tests/VitaSignal.Domain.Tests.csproj" />
   </Folder>
